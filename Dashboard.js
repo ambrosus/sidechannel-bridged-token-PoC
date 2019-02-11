@@ -66,7 +66,7 @@ async function sendRawTx(provider, abiData, account, key) {
 
 async function deployContract(web3_provider, code, deployer, key) {
     console.log("deploying contracts")
-    return await sendRawTx(web3_provider, code, deployer, key).contractAddress;
+    return (await sendRawTx(web3_provider, code, deployer, key)).contractAddress;
 }
 
 async function addOracle(web3_provider, bridge, oracle, account, key) {
