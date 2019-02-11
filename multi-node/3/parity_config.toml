@@ -1,0 +1,30 @@
+[parity]
+keys_path = "/app/keys"
+chain = "/app/chain.json"
+auto_update = "none"
+
+[network]
+discovery = true
+min_peers = 0
+port = 30305
+reserved_peers = "./peers.txt"
+
+[rpc]
+cors = ["all"]
+apis = ["eth","net","private","parity","personal"] 
+interface = "all"
+port = 8549
+
+[websockets]
+disable = true
+port = 8550
+
+[ui]
+disable = true
+
+[account]
+unlock = [ '0xcd2e67289f9fadbc2917547b51cbc7a9a792c5d0' ]
+password = ["/app/password.pwds"]
+
+[misc]
+logging = "own_tx=trace"

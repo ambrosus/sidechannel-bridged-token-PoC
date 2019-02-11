@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    </head>
+<body>
+    <form id="bridge">
+        Enter sidechain node url: <br/> <input name="url" id="bridge_url" type="text"> <br/>
+        <input type="submit" value="Submit">
+    </form>
+
+    <div id="bridgeData">
+    </div><br/>
+
+    <form id="token">
+        Enter token name: <br/> <input id="token_name" type="text"> <br/>
+        Enter token ticker: <br/> <input id="token_tick" type="text"> <br/>
+        Enter token decimals: <br/> <input id="token_decimals" type="number"> <br/>
+        Enter token supply: <br/> <input id="token_supply" type="number"> <br/>
+        <input type="submit" value="Submit">
+    </form>
+
+    <div id="tokenData">
+    </div><br/>
+
+    <script>
+        function setBridgeData(bridgeData) {
+            if (bridgeData.err != undefined) {
+                $("#bridgeData").html(`Error deploying smart contract bridge: ${bridgeData.err}`);
+                return;
+            }
+
+            $("#bridgeData").html(
+                `Bridge deployed for node: ${bridgeData.node}<br/>` + 
+                `Bridge contract address on mainnet: ${bridgeData.mainAddress}<br/>` + 
+                `Bridge contract address on sidechain: ${bridgeData.sideAddress}<br/>`);
+        }
+
+        function deployBridge(nodeUrl) {
+            var bridgeParam = {
+                url: nodeUrl
+            };
+            var Url = "/create_bridge?" + $.param(bridgeParam);
+            $.getJSON(Url, setBridgeData);
+        }
+
+        $(document).on('submit', '#bridge', function(event) {
+            event.preventDefault();
+            deployBridge($("#bridge_url").val());
+            return false;
+        }); 
+
+        function setBridgeData(tokenData) {
+            if (tokenData.err != undefined) {
+                $("#tokenData").html(`Error deploying smart contract bridge: ${tokenData.err}`);
+                return;
+            }
+
+            $("#tokenData").html(
+                `Token address on mainnet: ${tokenData.main}<br/>` + 
+                `Token address on sidechain: ${tokenData.side}<br/>`);
+        }
+
+        function deployToken(tokenParam) {
+            var Url = "/create_token?" + $.param(tokenParam);
+            $.getJSON(Url, setTokenData);
+        }
+
+        $(document).on('submit', '#token', function(event) {
+            event.preventDefault();
+            var tokenData = {
+                name: $("#token_name").val(),
+                ticker: $("#token_tick").val(),
+                decimals: $("#token_decimals").val(),
+                supply: $("#token_supply").val()
+            }
+            deployToken(tokenData);
+            return false;
+        }); 
+    </script>
+</body>
+</html>
