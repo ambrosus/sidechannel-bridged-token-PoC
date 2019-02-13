@@ -38,7 +38,7 @@ function displayPage(filename, res) {
 }
 
 function returnJson(json, res) {
-    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.writeHead(200, {'Content-Type': 'application/json'});
     res.write(JSON.stringify(json));
     return res.end();
 }

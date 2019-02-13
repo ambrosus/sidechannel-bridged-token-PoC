@@ -20,10 +20,10 @@ let contract_json = JSON.parse(source);
 
 let abi = contract_json.abi;
 
-async function sendAcceptMessage(web3_to, bridge_to) {
+async function sendAcceptMessage(web3_to, bridge_to, returnValues) {
     let bridge_dest = web3_to.eth.Contract(abi, bridge_to);
     console.log("Accepting message");
-    let abiData = bridge_dest.methods.acceptMessage(event.returnValues.sender, event.returnValues.recipient, event.returnValues.data).encodeABI();
+    let abiData = bridge_dest.methods.acceptMessage(returnValues.sender, returnValues.recipient, returnValues.data).encodeABI();
     let nonce = await web3_to.eth.getTransactionCount(myAddress);
     const rawTx = {
         nonce: nonce,
@@ -41,11 +41,11 @@ async function sendAcceptMessage(web3_to, bridge_to) {
 function setEventListener(web3_from, bridge_from, web3_to, bridge_to) {
     let bridge = web3_from.eth.Contract(abi, bridge_from);
     let subscription = bridge.events.Message().on('data', (event) => {
-        console.log("Event on " + web3_from);
+        console.log("Event on " + web3_from.currentProvider.host);
         console.log("Data:", event.returnValues.data);
         console.log("From:", event.returnValues.sender);
         console.log("To:", event.returnValues.recipient);
-        sendAcceptMessage(web3_to, bridge_to).then(value => {
+        sendAcceptMessage(web3_to, bridge_to, event.returnValues).then(value => {
             console.log(value);
         });
     });
@@ -58,20 +58,20 @@ async function run() {
     let subscription_main = setEventListener(web3_main, bridge_main, web3_side, bridge_side);
     let subscription_side = setEventListener(web3_side, bridge_side, web3_main, bridge_main);
 
-    return subscription_main, subscription_side;
+    return {main: subscription_main, side: subscription_side};
 }
 
-run().then((subscription_main, subscription_side) => {
+run().then((subscriptions) => {
     //console.log('Press any key to exit');
     process.stdin.setRawMode(true);
     process.stdin.resume();
     process.stdin.on('data', () => {
-        let p1 = subscription_main.unsubscribe((error, success) => {
+        let p1 = subscriptions.main.unsubscribe((error, success) => {
             if (success) {
                 console.log('Successfully unsubscribed!');
             }
         });
-        let p2 = subscription_side.unsubscribe((error, success) => {
+        let p2 = subscriptions.side.unsubscribe((error, success) => {
             if (success) {
                 console.log('Successfully unsubscribed!');
             }

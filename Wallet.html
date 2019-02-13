@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    </head>
+<body>
+    <div>
+        <h1>Wallet for account <span id="accountAddress"></span></h1>
+    </div>  
+    <div>
+        <h2>Main</h2>
+        <div>Balance: <span id="mainBalanceValue"></span> <input type="button" value="Update" onclick="updateBalance('main')"/></div>
+    </div>
+    <div>
+        <h2>Side</h2>
+        <div>Balance: <span id="sideBalanceValue"></span> <input type="button" value="Update" onclick="updateBalance('side')"/></div>
+        <div>
+            <div>Transfer</div>
+            <form id="transferTokens">
+                Transfer tokens to: <input id="transferAddress" type="text"> <br/>
+                Amount to transfer: <input id="transferAmount" type="number"> <br/>
+                <input type="submit" value="Submit">
+            </form>
+            <div it="transferResult"></div>
+        </div>
+    </div>
+    <div>
+        <h2>Convert</h2>
+        <form id="convertTokens">
+            <input type="radio" id="convertChoice1" name="convertDest" value="main" checked>
+            <label for="convertChoice1">From main to side</label>
+            <br/>
+            <input type="radio" id="convertChoice2" name="convertDest" value="side">
+            <label for="convertChoice2">From side to main</label> 
+            <br/>
+            Amount to convert: <input id="convertAmount" type="number"> <br/>
+            <input type="submit" value="Submit">
+        </form>
+        <p>Note: conversion requires Amber tokens</p>
+        <div it="convertResult"></div>
+    </div>
+    <div id="globalError"></div>
+    <script>
+        function setBalanceData(balance) {
+            if (balance.err) {
+                $('#globalError').html("Failed to get balance: " + balance.err);
+                return;
+            }
+            $('#' + balance.net + 'BalanceValue').html(balance.amount);
+        }
+
+        function updateBalance(network) {
+            var param = {
+                net: network
+            }
+            var Url = "/get_balance?" + $.param(param);
+            $.getJSON(Url, setBalanceData);
+        }
+
+        function setAccount(account) {
+            if (account.err) {
+                $('#globalError').html("Failed to get account: " + account.err);
+                return;
+            }
+            $('#accountAddress').html(account.address);
+        }
+
+        $.getJSON("/get_account", setAccount);
+        updateBalance("main");
+        updateBalance("side");
+
+        function transferComplete(data) {
+            if (data.err) {
+                $('#globalError').html("Failed to transfer tokens: " + account.err);
+                return;
+            }
+            updateBalance("main");
+            updateBalance("side");
+        }
+
+        $(document).on('submit', '#transferTokens', function(event) {
+            event.preventDefault();
+            var param = {
+                to: $("#transferAddress").val(),
+                amount: $("#transferAmount").val()
+            }
+            var Url = "/transfer?" + $.param(param);
+            $.getJSON(Url, transferComplete);
+            return false;
+        }); 
+
+        $(document).on('submit', '#convertTokens', function(event) {
+            event.preventDefault();
+            var param = {
+                net: $("input[name='convertDest']:checked").val(),
+                amount: $("#convertAmount").val()
+            }
+            var Url = "/convert?" + $.param(param);
+            $.getJSON(Url, transferComplete);
+            return false;
+        }); 
+    </script>
+</body>
+</html>
