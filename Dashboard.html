@@ -24,6 +24,10 @@
     </div><br/>
 
     <script>
+        $.ajaxSetup({
+            timeout: 600000 //Time in milliseconds
+        });
+
         function setBridgeData(bridgeData) {
             if (bridgeData.err != undefined) {
                 $("#bridgeData").html(`Error deploying smart contract bridge: ${bridgeData.err}`);
@@ -50,7 +54,7 @@
             return false;
         }); 
 
-        function setBridgeData(tokenData) {
+        function setTokenData(tokenData) {
             if (tokenData.err != undefined) {
                 $("#tokenData").html(`Error deploying smart contract bridge: ${tokenData.err}`);
                 return;

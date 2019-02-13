@@ -5,15 +5,14 @@ const Tx = require('ethereumjs-tx');
 //global params
 var myAddress = '0xC14BbA1b6CC582BBB6B554a5c0821C619CFD42c4';
 var privateKey = Buffer.from('099e8dc1316d838865648e3df3698e7a2037b6c81f270cc075a415b4a8ca6270', 'hex');
-var bridge_main = "0xd7f697affabe8f888e0b42dc0e6eba262b073218";
-var bridge_side = "0xd7f697affabe8f888e0b42dc0e6eba262b073218";
+var bridge_main = "0xb5df18126ec2f5c4e100e8ddfc81e67bce1e0b56";
+var bridge_side = "0xbb1ceff9b9795da346032ee7fafcfd2e5c140f48";
 var main = 'ws://localhost:8546';
 var side = 'ws://localhost:8548';
 var contract_source = "./bin/BridgeMain.json"
 
-const web3_main = new Web3.providers.WebsocketProvider(main);
-const web3_side = new Web3.providers.WebsocketProvider(side);
-const web3 = new Web3(web3_main);
+const web3_main = new Web3(new Web3.providers.WebsocketProvider(main));
+const web3_side = new Web3(new Web3.providers.WebsocketProvider(side));
 
 // contracts json contains compiled bridge contract
 let source = fs.readFileSync(contract_source);
@@ -21,12 +20,11 @@ let contract_json = JSON.parse(source);
 
 let abi = contract_json.abi;
 
-function sendAcceptMessage(web3_to, bridge_to) {
-    web3.eth.setProvider(web3_to);
-    let bridge_dest = web3.eth.Contract(abi, bridge_to);
+async function sendAcceptMessage(web3_to, bridge_to) {
+    let bridge_dest = web3_to.eth.Contract(abi, bridge_to);
     console.log("Accepting message");
     let abiData = bridge_dest.methods.acceptMessage(event.returnValues.sender, event.returnValues.recipient, event.returnValues.data).encodeABI();
-    let nonce = await web3.eth.getTransactionCount(myAddress);
+    let nonce = await web3_to.eth.getTransactionCount(myAddress);
     const rawTx = {
         nonce: nonce,
         from: myAddress,
@@ -36,20 +34,20 @@ function sendAcceptMessage(web3_to, bridge_to) {
       };
     const tx = new Tx(rawTx);
     tx.sign(privateKey);
-    let receipt = await web3.eth.sendSignedTransaction('0x' + tx.serialize().toString('hex'))
+    let receipt = await web3_to.eth.sendSignedTransaction('0x' + tx.serialize().toString('hex'))
     return receipt.transactionHash, receipt.status;
 }
 
 function setEventListener(web3_from, bridge_from, web3_to, bridge_to) {
-    web3.eth.setProvider(web3_from);
-    let bridge = web3.eth.Contract(abi, bridge_from);
+    let bridge = web3_from.eth.Contract(abi, bridge_from);
     let subscription = bridge.events.Message().on('data', (event) => {
         console.log("Event on " + web3_from);
         console.log("Data:", event.returnValues.data);
         console.log("From:", event.returnValues.sender);
         console.log("To:", event.returnValues.recipient);
-        
-        console.log(sendAcceptMessage(web3_to, bridge_to));
+        sendAcceptMessage(web3_to, bridge_to).then(value => {
+            console.log(value);
+        });
     });
     return subscription;
 }
@@ -62,22 +60,28 @@ async function run() {
 
     return subscription_main, subscription_side;
 }
-run();
-/*
-run().then(subscription => {
+
+run().then((subscription_main, subscription_side) => {
     //console.log('Press any key to exit');
     process.stdin.setRawMode(true);
     process.stdin.resume();
     process.stdin.on('data', () => {
-        subscription.unsubscribe((error, success) => {
+        let p1 = subscription_main.unsubscribe((error, success) => {
             if (success) {
                 console.log('Successfully unsubscribed!');
             }
         });
-        process.exit.bind(process, 0);
+        let p2 = subscription_side.unsubscribe((error, success) => {
+            if (success) {
+                console.log('Successfully unsubscribed!');
+            }
+        });
+
+        Promise.all([p1, p2]).then(() => {
+            process.exit.bind(process, 0);
+        });
     });
 })
 .catch(err => {
     console.log(err);
 });
-*/
