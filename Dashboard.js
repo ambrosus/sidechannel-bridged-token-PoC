@@ -9,18 +9,21 @@ const MY_ADDRESS = '0xC14BbA1b6CC582BBB6B554a5c0821C619CFD42c4';
 const MY_PRIVATE_KEY = Buffer.from('099e8dc1316d838865648e3df3698e7a2037b6c81f270cc075a415b4a8ca6270', 'hex');
 const MAINNET_URL = "ws://localhost:8546";
 const BRIDGE_SOURCE_FILE = "./bin/BridgeMain.json";
-const TOKEN_SOURCE_FILE = "./bin/BridgedToken.json";
+const MAIN_TOKEN_SOURCE_FILE = "./bin/BridgedToken.json";
+const SIDE_TOKEN_SOURCE_FILE = "./bin/SideChainToken.json";
 
 var _web3_main = new Web3(new Web3.providers.WebsocketProvider(MAINNET_URL));
-var _web3_side = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8548'));
-var _bridge_main = '0xb5df18126ec2f5c4e100e8ddfc81e67bce1e0b56';
-var _bridge_side = '0xbb1ceff9b9795da346032ee7fafcfd2e5c140f48';
+var _web3_side =  new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8548'));
+var _bridge_main = '0xd3f12763cb93507e782c94d66648c76292461920';
+var _bridge_side = '0x47a518a0e60f2308f3e6173059a57d7b62cbf500';
 
 // contracts json contains compiled bridge contract
 let source = fs.readFileSync(BRIDGE_SOURCE_FILE);
 let bridge_contract = JSON.parse(source);
-source = fs.readFileSync(TOKEN_SOURCE_FILE);
-let token_contract = JSON.parse(source);
+source = fs.readFileSync(MAIN_TOKEN_SOURCE_FILE);
+let main_token_contract = JSON.parse(source);
+source = fs.readFileSync(SIDE_TOKEN_SOURCE_FILE);
+let side_token_contract = JSON.parse(source);
 
 // user input parameters
 var side_url = "";
@@ -118,10 +121,10 @@ async function createBridge(req, res) {
     }
 }
 
-async function deployToken(web3_provider, tokenParams, bridge, deployer, key) {
-    let token_dest = web3_provider.eth.Contract(token_contract.abi);
+async function deployToken(web3_provider, contract, tokenParams, bridge, deployer, key) {
+    let token_dest = web3_provider.eth.Contract(contract.abi);
     let abiData = token_dest.deploy({
-        data: token_contract.bytecode,
+        data: contract.bytecode,
         arguments: [deployer, bridge, tokenParams.ticker, tokenParams.name, tokenParams.decimals, tokenParams.supply, tokenParams.locked] 
         //address _owner, address _bridge, string memory _symbol, string memory _name, uint8 _decimals, uint _initialSupply, bool locked
     })
@@ -129,8 +132,8 @@ async function deployToken(web3_provider, tokenParams, bridge, deployer, key) {
     return await deployContract(web3_provider, '0x' + abiData, deployer, key);
 }
 
-async function setOtherToken(web3_provider, token, otherToken, account, key) {
-    let token_dest = web3_provider.eth.Contract(token_contract.abi, token);
+async function setOtherToken(web3_provider, contract, token, otherToken, account, key) {
+    let token_dest = web3_provider.eth.Contract(contract.abi, token);
     let abiData = token_dest.methods.setOtherToken(otherToken).encodeABI();
     await sendRawTx(web3_provider, abiData, account, key, token);
 }
@@ -152,25 +155,25 @@ async function createToken(req, res) {
         var tokenMain;
         var tokenSide;
 
-        let mainPromise =  deployToken(_web3_main, tokenParams, _bridge_main, MY_ADDRESS, MY_PRIVATE_KEY).then(
+        let mainPromise = deployToken(_web3_main, main_token_contract, tokenParams, _bridge_main, MY_ADDRESS, MY_PRIVATE_KEY).then(
             address => {
                 tokenMain = address;
             }
         );
         tokenParams.locked = false;
-        let sidePromise = deployToken(_web3_side, tokenParams, _bridge_side, MY_ADDRESS, MY_PRIVATE_KEY).then(
+        let sidePromise = deployToken(_web3_side, side_token_contract, tokenParams, _bridge_side, MY_ADDRESS, MY_PRIVATE_KEY).then(
             address => {
                 tokenSide = address;
             }
         );
         await Promise.all([mainPromise, sidePromise]);
     
-        mainPromise = setOtherToken(_web3_main, tokenMain, tokenSide, MY_ADDRESS, MY_PRIVATE_KEY).then(
+        mainPromise = setOtherToken(_web3_main, main_token_contract, tokenMain, tokenSide, MY_ADDRESS, MY_PRIVATE_KEY).then(
             val => {
                 return addContract(_web3_main, _bridge_main, tokenMain, MY_ADDRESS, MY_PRIVATE_KEY);
             }
         );
-        sidePromise = setOtherToken(_web3_side, tokenSide, tokenMain, MY_ADDRESS, MY_PRIVATE_KEY).then(
+        sidePromise = setOtherToken(_web3_side, side_token_contract, tokenSide, tokenMain, MY_ADDRESS, MY_PRIVATE_KEY).then(
             val => {
                 return addContract(_web3_side, _bridge_side, tokenSide, MY_ADDRESS, MY_PRIVATE_KEY);
             }

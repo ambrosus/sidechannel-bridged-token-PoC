@@ -30,12 +30,43 @@ contract BridgedToken is ERC20, ERC20Detailed, Ownable {
 
     function lock(uint _amount) public {
         _transfer(msg.sender, address(bridge), _amount);
-        bridge.relayMessage(abi.encodeWithSignature("unlock(address, uint256)", msg.sender, _amount), msg.sender, otherToken);
+        bridge.relayMessage(abi.encodeWithSignature("unlock(address,uint256)", msg.sender, _amount), msg.sender, otherToken);
     }
 
     function unlock(address _account, uint _amount) public {
         require(msg.sender == address(bridge));
         _transfer(address(bridge), _account, _amount);
+    }
+}
+
+contract SideChainToken is Ownable {
+    Bridge private bridge;
+    address private otherToken;
+
+    constructor (address _owner, address _bridge, string memory _symbol, string memory _name, uint8 _decimals, uint _initialSupply, bool locked)
+        public payable
+        Ownable() {
+            require(!locked || msg.value==_initialSupply);
+            bridge = Bridge(_bridge);
+            _transferOwnership(_owner);
+        }
+
+    function setOtherToken(address _other) public onlyOwner {
+        otherToken = _other;
+    }
+
+    function lock(uint _amount) public payable {
+        require(msg.value == _amount);
+        bridge.relayMessage(abi.encodeWithSignature("unlock(address,uint256)", msg.sender, _amount), msg.sender, otherToken);
+    }
+
+    function unlock(address payable _account, uint _amount) public {
+        require(msg.sender == address(bridge));
+        _account.transfer(_amount);
+    }
+
+    function balanceOf(address _owner) view public returns (uint256) {
+        return _owner.balance;
     }
 }
 
@@ -68,7 +99,8 @@ contract BridgeMain is Ownable, Bridge {
         messages[messageId].votes += 1;
         
         if (messages[messageId].votes > oraclesLength / 2) {
-            _to.call(data);
+            (bool success, ) = (_to.call(data));
+            require(success);
         }
     }
     

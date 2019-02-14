@@ -1,45 +1,59 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+        <link rel="stylesheet" href="./styles.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     </head>
-<body>
-    <div>
-        <h1>Wallet for account <span id="accountAddress"></span></h1>
-    </div>  
-    <div>
-        <h2>Main</h2>
-        <div>Balance: <span id="mainBalanceValue"></span> <input type="button" value="Update" onclick="updateBalance('main')"/></div>
-    </div>
-    <div>
-        <h2>Side</h2>
-        <div>Balance: <span id="sideBalanceValue"></span> <input type="button" value="Update" onclick="updateBalance('side')"/></div>
-        <div>
-            <div>Transfer</div>
-            <form id="transferTokens">
-                Transfer tokens to: <input id="transferAddress" type="text"> <br/>
-                Amount to transfer: <input id="transferAmount" type="number"> <br/>
-                <input type="submit" value="Submit">
-            </form>
-            <div it="transferResult"></div>
+<body class="w3-light-grey">
+    <div class="w3-main w3-light-grey">
+        <div class="w3-cell-row">
+            <div class="w3-container w3-cell">
+                <h1 class="w3-center">Wallet for account <span id="accountAddress"></span></h1>
+            </div>
         </div>
+        <div class="w3-cell-row">
+            <div class="w3-container w3-cell">
+                <h2>Main</h2>
+                <div class="w3-container w3-example w3-white w3-padding ">
+                    <div class="w3-left">Balance: <span id="mainBalanceValue"></span> </div>
+                    <input class="w3-btn w3-green w3-right" type="button" value="Update" onclick="updateBalance('main')"/> 
+                </div>
+                <div class="w3-container w3-example w3-white w3-padding">
+                    <h3>Convert</h3>
+                    <form id="convertTokens">
+                        <div>
+                            <input class="w3-hidden toggle" type="radio" id="convertChoice1" name="convertDest" value="main" checked>
+                            <label class="w3-btn w3-border" for="convertChoice1">From main to side</label>
+                            <input class="w3-hidden toggle" type="radio" id="convertChoice2" name="convertDest" value="side">
+                            <label class="w3-btn w3-border" for="convertChoice2">From side to main</label> 
+                        </div>
+                        <br/>
+                        Amount to convert: <input class="w3-input w3-border" id="convertAmount" type="number"> <br/>
+                        <input class="w3-btn w3-green" type="submit" value="Submit">
+                    </form>
+                    <div it="convertResult"></div>
+                    <div class="w3-note"><p class="w3-margin">Note: conversion requires Amber tokens</p></div>
+                </div>
+            </div>
+            <div class="w3-container w3-cell">
+                <h2>Side</h2>
+                <div class="w3-container w3-example w3-white w3-padding ">
+                    Balance: <span id="sideBalanceValue"></span> 
+                    <input class="w3-btn w3-green w3-right" type="button" value="Update" onclick="updateBalance('side')"/></div>
+                <div class="w3-container w3-example w3-white w3-padding ">
+                    <h3>Transfer</h3>
+                    <form id="transferTokens">
+                        Transfer tokens to: <input class="w3-input w3-border" id="transferAddress" type="text"> <br/>
+                        Amount to transfer: <input class="w3-input w3-border" id="transferAmount" type="number"> <br/>
+                        <input class="w3-btn w3-green" type="submit" value="Submit">
+                    </form>
+                    <div class="w3-panel w3-note" id="transferResult"></div>
+                </div>
+            </div>
+        </div>
+        <div class="w3-warning" id="globalError"></div>
     </div>
-    <div>
-        <h2>Convert</h2>
-        <form id="convertTokens">
-            <input type="radio" id="convertChoice1" name="convertDest" value="main" checked>
-            <label for="convertChoice1">From main to side</label>
-            <br/>
-            <input type="radio" id="convertChoice2" name="convertDest" value="side">
-            <label for="convertChoice2">From side to main</label> 
-            <br/>
-            Amount to convert: <input id="convertAmount" type="number"> <br/>
-            <input type="submit" value="Submit">
-        </form>
-        <p>Note: conversion requires Amber tokens</p>
-        <div it="convertResult"></div>
-    </div>
-    <div id="globalError"></div>
     <script>
         function setBalanceData(balance) {
             if (balance.err) {
@@ -71,7 +85,7 @@
 
         function transferComplete(data) {
             if (data.err) {
-                $('#globalError').html("Failed to transfer tokens: " + account.err);
+                $('#globalError').html("Failed to transfer tokens: " + data.err);
                 return;
             }
             updateBalance("main");
@@ -79,6 +93,7 @@
         }
 
         $(document).on('submit', '#transferTokens', function(event) {
+            $('#globalError').html("");
             event.preventDefault();
             var param = {
                 to: $("#transferAddress").val(),
@@ -90,6 +105,7 @@
         }); 
 
         $(document).on('submit', '#convertTokens', function(event) {
+            $('#globalError').html("");
             event.preventDefault();
             var param = {
                 net: $("input[name='convertDest']:checked").val(),

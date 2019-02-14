@@ -4,18 +4,21 @@ const fs = require("fs");
 const Web3 = require('web3');
 const Tx = require('ethereumjs-tx');
 
-const MY_ADDRESS = /*'0x04FEB49ffc9645bF66CDC3191EC236b8647278B4'; //*/'0xC14BbA1b6CC582BBB6B554a5c0821C619CFD42c4';
-const MY_PRIVATE_KEY = /*Buffer.from('af45f5d02f04e2c52b138b48f3513bd9000280e3b3383911aeb05d9e5dd07861', 'hex'); //*/Buffer.from('099e8dc1316d838865648e3df3698e7a2037b6c81f270cc075a415b4a8ca6270', 'hex');
+const MY_ADDRESS = '0xC14BbA1b6CC582BBB6B554a5c0821C619CFD42c4';
+const MY_PRIVATE_KEY = Buffer.from('099e8dc1316d838865648e3df3698e7a2037b6c81f270cc075a415b4a8ca6270', 'hex');
 const MAINNET_URL = "ws://localhost:8546";
-const TOKEN_SOURCE_FILE = "./bin/BridgedToken.json";
+const MAIN_TOKEN_SOURCE_FILE = "./bin/BridgedToken.json";
+const SIDE_TOKEN_SOURCE_FILE = "./bin/SideChainToken.json";
 
 var _web3_main = new Web3(new Web3.providers.WebsocketProvider(MAINNET_URL));
 var _web3_side = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8548'));
-var _token_main = '0xa2b8e36e28f704da0aa9fb966b8fd88754248f2e';
-var _token_side = '0x9a9e5a71efd94e446a0b2e78a5ae5da4debc176a';
+var _token_main = '0xe329e3bc2f807ca50ff97aa8f0857750fd7446be';
+var _token_side = '0xd3f12763cb93507e782c94d66648c76292461920';
 
-let source = fs.readFileSync(TOKEN_SOURCE_FILE);
-const token_contract = JSON.parse(source);
+let source = fs.readFileSync(MAIN_TOKEN_SOURCE_FILE);
+let main_token_contract = JSON.parse(source);
+source = fs.readFileSync(SIDE_TOKEN_SOURCE_FILE);
+let side_token_contract = JSON.parse(source);
 
 function displayPage(filename, res) {
     fs.readFile(filename, function(err, data) {
@@ -23,7 +26,7 @@ function displayPage(filename, res) {
           res.writeHead(404, {'Content-Type': 'text/html'});
           return res.end("404 Not Found");
         }
-        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.writeHead(200, {});
         res.write(data);
         return res.end();
     });
@@ -35,13 +38,14 @@ function returnJson(json, res) {
     return res.end();
 }
 
-async function sendRawTx(provider, abiData, account, key, dest) {
+async function sendRawTx(provider, abiData, account, key, dest, val) {
     let nonce = await provider.eth.getTransactionCount(account);
     var rawTx = {
         nonce: nonce,
         from: account,
         to: dest,
         data: abiData,
+        value: val,
         gasPrice: '0x09184e72a000',
         gasLimit: '0x5AA710',
       };
@@ -53,20 +57,23 @@ async function sendRawTx(provider, abiData, account, key, dest) {
 function selectNetwork(net, err) {
     var selectedProvider;
     var selectedToken;
+    var selectedContract;
     switch (net) {
         case "main":
             selectedProvider = _web3_main;
             selectedToken = _token_main;
+            selectedContract = main_token_contract;
             break;
         case "side":
             selectedProvider = _web3_side;
             selectedToken = _token_side;
+            selectedContract = side_token_contract;
             break;
         default:
             err();
             break;
     }
-    return { provider: selectedProvider, token: selectedToken };
+    return { provider: selectedProvider, token: selectedToken, contract: selectedContract };
 }
 
 function getAccount(req, res) {
@@ -76,8 +83,8 @@ function getAccount(req, res) {
     return returnJson(account, res);
 }
 
-async function getTokenBalance(web3_provider, token, account, key) {
-    let token_dest = web3_provider.eth.Contract(token_contract.abi, token);
+async function getTokenBalance(web3_provider, contract, token, account, key) {
+    let token_dest = web3_provider.eth.Contract(contract.abi, token);
     let balance = await token_dest.methods.balanceOf(account).call({from: account});
     return balance;
 }
@@ -92,7 +99,7 @@ async function getBalance(req, res) {
         if (params.provider)
         {
             balance.net = req.query.net;
-            balance.amount = await getTokenBalance(params.provider, params.token, MY_ADDRESS, MY_PRIVATE_KEY);
+            balance.amount = await getTokenBalance(params.provider, params.contract, params.token, MY_ADDRESS, MY_PRIVATE_KEY);
         }
         return returnJson(balance, res);
     } catch (error) {
@@ -106,9 +113,7 @@ async function getBalance(req, res) {
 
 async function transferTokens(req, res) {
     try {
-        let token_dest = _web3_side.eth.Contract(token_contract.abi, _token_side);
-        let abiData = token_dest.methods.transfer(req.query.to, req.query.amount).encodeABI();
-        await sendRawTx(_web3_side, abiData, MY_ADDRESS, MY_PRIVATE_KEY, _token_side);
+        await sendRawTx(_web3_side, "0x0", MY_ADDRESS, MY_PRIVATE_KEY, req.query.to, req.query.amount);
         return returnJson({}, res);
     } catch (error) {
         console.log(error);
@@ -127,9 +132,13 @@ async function convertTokens(req, res) {
             console.log(req.query.net);
         });
         if (params.provider) {
-            let token_dest = params.provider.eth.Contract(token_contract.abi, params.token);
+            let token_dest = params.provider.eth.Contract(params.contract.abi, params.token);
             let abiData = token_dest.methods.lock(req.query.amount).encodeABI();
-            await sendRawTx(params.provider, abiData, MY_ADDRESS, MY_PRIVATE_KEY, params.token);
+            if (req.query.net == "side"){
+                await sendRawTx(params.provider, abiData, MY_ADDRESS, MY_PRIVATE_KEY, params.token, req.query.amount);
+            } else {
+                await sendRawTx(params.provider, abiData, MY_ADDRESS, MY_PRIVATE_KEY, params.token);
+            }
         }
         return returnJson(conversion, res);
     } catch (error) {

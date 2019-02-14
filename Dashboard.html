@@ -1,28 +1,48 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+        <link rel="stylesheet" href="./styles.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     </head>
-<body>
-    <form id="bridge">
-        Enter sidechain node url: <br/> <input name="url" id="bridge_url" type="text"> <br/>
-        <input type="submit" value="Submit">
-    </form>
-
-    <div id="bridgeData">
-    </div><br/>
-
-    <form id="token">
-        Enter token name: <br/> <input id="token_name" type="text"> <br/>
-        Enter token ticker: <br/> <input id="token_tick" type="text"> <br/>
-        Enter token decimals: <br/> <input id="token_decimals" type="number"> <br/>
-        Enter token supply: <br/> <input id="token_supply" type="number"> <br/>
-        <input type="submit" value="Submit">
-    </form>
-
-    <div id="tokenData">
-    </div><br/>
-
+<body class="w3-light-grey">
+    <div class="w3-main w3-light-grey">
+        <div class="w3-cell-row">
+            <div class="w3-container w3-cell">
+                <h1 class="w3-center">Hermes dashboard</h1>
+            </div>
+        </div>
+        <div class="w3-cell-row">
+            <div class="w3-container w3-cell">
+                <div class="w3-container w3-example w3-white w3-padding">
+                    <h2>Create bridge</h2>
+                    <form id="bridge">
+                        Enter sidechain node url:
+                        <input class="w3-input w3-border" name="url" id="bridge_url" type="text">
+                        <input class="w3-btn w3-green w3-margin-top w3-margin-bottom" type="submit" value="Submit">
+                    </form>
+                    <div id="bridgeData"></div>
+                </div>
+            </div>
+            <div class="w3-container w3-cell">
+                <div class="w3-container w3-example w3-white w3-padding">
+                    <h2>Create token</h2>
+                    <form id="token">
+                        Enter token name: 
+                        <input class="w3-input w3-border" id="token_name" type="text"> 
+                        Enter token ticker: 
+                        <input class="w3-input w3-border" id="token_tick" type="text"> 
+                        Enter token decimals: 
+                        <input class="w3-input w3-border" id="token_decimals" type="number"> 
+                        Enter token supply: 
+                        <input class="w3-input w3-border" id="token_supply" type="number">  
+                        <input class="w3-btn w3-green w3-margin-top w3-margin-bottom" type="submit" value="Submit">
+                    </form>
+                    <div id="tokenData"></div>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         $.ajaxSetup({
             timeout: 600000 //Time in milliseconds
@@ -30,7 +50,7 @@
 
         function setBridgeData(bridgeData) {
             if (bridgeData.err != undefined) {
-                $("#bridgeData").html(`Error deploying smart contract bridge: ${bridgeData.err}`);
+                $("#bridgeData").html(`Error deploying smart contract: ${bridgeData.err}`);
                 return;
             }
 
@@ -56,7 +76,7 @@
 
         function setTokenData(tokenData) {
             if (tokenData.err != undefined) {
-                $("#tokenData").html(`Error deploying smart contract bridge: ${tokenData.err}`);
+                $("#tokenData").html(`Error deploying smart contract: ${tokenData.err}`);
                 return;
             }
 
