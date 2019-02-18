@@ -115,3 +115,56 @@ contract BridgeMain is Ownable, Bridge {
         contracts[_contract] = true;
     }
 }
+
+contract BridgeSide is Ownable, Bridge {
+    struct MessageStore {
+        address _from; 
+        address _to; 
+        bytes data;
+        uint votes;
+        bytes[] signatures;
+    }
+    
+    uint oraclesLength = 0;
+    mapping (address => bool) oracles;
+    mapping (address => bool) contracts;
+    mapping (bytes32 => MessageStore) messages;
+    
+    event Message(bytes data, address sender, address recipient);
+    event MessageAccepted(bytes data, address sender, address recipient, bytes[] signatures);
+    
+    function relayMessage(bytes memory data, address sender, address recipient) public {
+        require(contracts[msg.sender]);
+        emit Message(data, sender, recipient);
+    }
+    
+    function acceptMessage(address _from, address _to, bytes memory data) public {
+        require(oracles[msg.sender]);
+        bytes32 messageId = keccak256(abi.encodePacked(_from, _to, data));
+        if (messages[messageId].votes == 0) {
+            messages[messageId] = MessageStore(_from, _to, data, 0);
+        }
+        messages[messageId].votes += 1;
+        
+        if (messages[messageId].votes > oraclesLength / 2) {
+            (bool success, ) = (_to.call(data));
+            require(success);
+        }
+    }
+
+    function signMessage(bytes memory data, address sender, address recipient, bytes memory signature) public {
+        require(oracles[msg.sender]);
+
+    }
+    
+    function addOracle(address oracle) public onlyOwner {
+        require(!oracles[oracle]);
+        oracles[oracle] = true;
+        oraclesLength += 1;
+    }
+    
+    function addContract(address _contract) public onlyOwner {
+        require(!contracts[_contract]);
+        contracts[_contract] = true;
+    }
+}

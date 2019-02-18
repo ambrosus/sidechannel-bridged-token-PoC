@@ -4,20 +4,32 @@ const fs = require("fs");
 const Web3 = require('web3');
 const Tx = require('ethereumjs-tx');
 
+let configFile = fs.readFileSync("./Dashboard/Dashboard.conf");
+let config = JSON.parse(configFile);
+
 //global node parameters
-const MY_ADDRESS = '0xC14BbA1b6CC582BBB6B554a5c0821C619CFD42c4';
-const MY_PRIVATE_KEY = Buffer.from('099e8dc1316d838865648e3df3698e7a2037b6c81f270cc075a415b4a8ca6270', 'hex');
-const MAINNET_URL = "ws://localhost:8546";
-const BRIDGE_SOURCE_FILE = "./bin/BridgeMain.json";
-const MAIN_TOKEN_SOURCE_FILE = "./bin/BridgedToken.json";
-const SIDE_TOKEN_SOURCE_FILE = "./bin/SideChainToken.json";
+const MY_ADDRESS = config.address;
+const MY_PRIVATE_KEY = Buffer.from(config.key, 'hex');
+const MAINNET_URL = config.mainnet;
+var SIDECHAIN_URL;
+var BRIDGE_MAIN_ADDRESS;
+var BRIDGE_SIDE_ADDRESS;
+if (config.bridge) {
+    SIDECHAIN_URL = config.bridge.node;
+    BRIDGE_MAIN_ADDRESS = config.bridge.mainAddress;
+    BRIDGE_SIDE_ADDRESS = config.bridge.sideAddress;
+}
+const BRIDGE_SOURCE_FILE = config.bridgeContract;
+const MAIN_TOKEN_SOURCE_FILE = config.mainTokenContract;
+const SIDE_TOKEN_SOURCE_FILE = config.sideTokenContract;
 
+//global variables
 var _web3_main = new Web3(new Web3.providers.WebsocketProvider(MAINNET_URL));
-var _web3_side =  new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8548'));
-var _bridge_main = '0xd3f12763cb93507e782c94d66648c76292461920';
-var _bridge_side = '0x47a518a0e60f2308f3e6173059a57d7b62cbf500';
+var _web3_side =  SIDECHAIN_URL != undefined ? new Web3(new Web3.providers.WebsocketProvider(SIDECHAIN_URL)) : undefined;
+var _bridge_main = BRIDGE_MAIN_ADDRESS;
+var _bridge_side = BRIDGE_SIDE_ADDRESS;
 
-// contracts json contains compiled bridge contract
+// contracts json contains compiled contracts
 let source = fs.readFileSync(BRIDGE_SOURCE_FILE);
 let bridge_contract = JSON.parse(source);
 source = fs.readFileSync(MAIN_TOKEN_SOURCE_FILE);
@@ -25,8 +37,10 @@ let main_token_contract = JSON.parse(source);
 source = fs.readFileSync(SIDE_TOKEN_SOURCE_FILE);
 let side_token_contract = JSON.parse(source);
 
-// user input parameters
-var side_url = "";
+function saveConfig() {
+    var conf = JSON.stringify(config);
+    fs.writeFileSync('./Dashboard.conf', conf, 'utf8');
+}
 
 function displayPage(filename, res) {
     fs.readFile(filename, function(err, data) {
@@ -85,10 +99,9 @@ async function addContract(web3_provider, bridge, contract, account, key) {
 
 async function createBridge(req, res) {
     try {
-        side_url = req.query.url;
-        console.log("Creating bridge with node " + side_url);
+        console.log("Creating bridge with node " + req.query.url);
     
-        _web3_side = new Web3(new Web3.providers.WebsocketProvider(side_url));
+        _web3_side = new Web3(new Web3.providers.WebsocketProvider(req.query.url));
     
         let mainPromise = deployContract(_web3_main, '0x' + bridge_contract.bytecode, MY_ADDRESS, MY_PRIVATE_KEY).then(
             address => {
@@ -106,10 +119,12 @@ async function createBridge(req, res) {
         console.log("Done!");
 
         var bridgeData = {
-            node: side_url,
+            node: req.query.url,
             mainAddress: _bridge_main,
             sideAddress: _bridge_side
         }
+        config.bridge = bridgeData;
+        saveConfig();
         console.log(bridgeData);
         return returnJson(bridgeData, res)
     } catch (error) {
@@ -196,15 +211,30 @@ async function createToken(req, res) {
     }
 }
 
+function getBridge(req, res) {
+    if (_web3_side && _bridge_side && _bridge_main) {
+        var bridgeData = {
+            node: config.bridge.node,
+            mainAddress: config.bridge.mainAddress,
+            sideAddress: config.bridge.sideAddress
+        }
+        return returnJson(bridgeData, res)
+    } else {
+        return returnJson({}, res)
+    }
+}
+
 function selectAction(req, res) {
     switch (req.pathname) {
         case "":
         case "/":
-            return displayPage("./Dashboard.html", res);
+            return displayPage("./Dashboard/Dashboard.html", res);
         case "/create_bridge":
             return createBridge(req, res);
         case "/create_token":
             return createToken(req, res);
+        case "/get_bridge":
+            return getBridge(req, res);
         default:
             return displayPage("." + req.pathname, res)
     }

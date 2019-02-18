@@ -2,20 +2,24 @@ const Web3 = require('web3');
 const fs = require("fs");
 const Tx = require('ethereumjs-tx');
 
-//global params
-var myAddress = '0xC14BbA1b6CC582BBB6B554a5c0821C619CFD42c4';
-var privateKey = Buffer.from('099e8dc1316d838865648e3df3698e7a2037b6c81f270cc075a415b4a8ca6270', 'hex');
-var bridge_main = "0xd3f12763cb93507e782c94d66648c76292461920";
-var bridge_side = "0x47a518a0e60f2308f3e6173059a57d7b62cbf500";
-var main = 'ws://localhost:8546';
-var side = 'ws://localhost:8548';
-var contract_source = "./bin/BridgeMain.json"
+let configFile = fs.readFileSync("./Oracle/Oracle.conf");
+let config = JSON.parse(configFile);
 
-const web3_main = new Web3(new Web3.providers.WebsocketProvider(main));
-const web3_side = new Web3(new Web3.providers.WebsocketProvider(side));
+//global params
+const MY_ADDRESS = config.address;
+const MY_PRIVATE_KEY = Buffer.from(config.key, 'hex');
+const MAINNET_URL = config.mainnet;
+const SIDECHAIN_URL = config.sidechain;
+const BRIDGE_MAIN_ADDRESS = config.bridge.mainAddress;
+const BRIDGE_SIDE_ADDRESS = config.bridge.sideAddress;
+
+const BRIDGE_SOURCE_FILE = config.bridgeContract;
+
+const web3_main = new Web3(new Web3.providers.WebsocketProvider(MAINNET_URL));
+const web3_side = new Web3(new Web3.providers.WebsocketProvider(SIDECHAIN_URL));
 
 // contracts json contains compiled bridge contract
-let source = fs.readFileSync(contract_source);
+let source = fs.readFileSync(BRIDGE_SOURCE_FILE);
 let contract_json = JSON.parse(source);
 
 let abi = contract_json.abi;
@@ -25,17 +29,17 @@ async function sendAcceptMessage(web3_to, bridge_to, returnValues) {
         let bridge_dest = web3_to.eth.Contract(abi, bridge_to);
         console.log("Accepting message");
         let abiData = bridge_dest.methods.acceptMessage(returnValues.sender, returnValues.recipient, returnValues.data).encodeABI();
-        let nonce = await web3_to.eth.getTransactionCount(myAddress);
+        let nonce = await web3_to.eth.getTransactionCount(MY_ADDRESS);
         const rawTx = {
             nonce: nonce,
-            from: myAddress,
+            from: MY_ADDRESS,
             data: abiData,
             to: bridge_to,
             gasPrice: '0x09184e72a000',
             gasLimit: '0x5AA710',
           };
         const tx = new Tx(rawTx);
-        tx.sign(privateKey);
+        tx.sign(MY_PRIVATE_KEY);
         let receipt = await web3_to.eth.sendSignedTransaction('0x' + tx.serialize().toString('hex'))
         return {tx: receipt.transactionHash, status: receipt.status};
     } catch (error) {
@@ -60,8 +64,8 @@ function setEventListener(web3_from, bridge_from, web3_to, bridge_to) {
 async function run() {
     console.log("Starting to listen for events");
 
-    let subscription_main = setEventListener(web3_main, bridge_main, web3_side, bridge_side);
-    let subscription_side = setEventListener(web3_side, bridge_side, web3_main, bridge_main);
+    let subscription_main = setEventListener(web3_main, BRIDGE_MAIN_ADDRESS, web3_side, BRIDGE_SIDE_ADDRESS);
+    let subscription_side = setEventListener(web3_side, BRIDGE_SIDE_ADDRESS, web3_main, BRIDGE_MAIN_ADDRESS);
 
     return {main: subscription_main, side: subscription_side};
 }

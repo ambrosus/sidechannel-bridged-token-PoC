@@ -2,7 +2,7 @@
 <html>
     <head>
         <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-        <link rel="stylesheet" href="./styles.css">
+        <link rel="stylesheet" href="./Common/styles.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     </head>
 <body class="w3-light-grey">
@@ -53,11 +53,14 @@
                 $("#bridgeData").html(`Error deploying smart contract: ${bridgeData.err}`);
                 return;
             }
-
-            $("#bridgeData").html(
-                `Bridge deployed for node: ${bridgeData.node}<br/>` + 
-                `Bridge contract address on mainnet: ${bridgeData.mainAddress}<br/>` + 
-                `Bridge contract address on sidechain: ${bridgeData.sideAddress}<br/>`);
+            if (bridgeData.node != undefined) {
+                $("#bridgeData").html(
+                    `Bridge deployed for node: ${bridgeData.node}<br/>` + 
+                    `Bridge contract address on mainnet: ${bridgeData.mainAddress}<br/>` + 
+                    `Bridge contract address on sidechain: ${bridgeData.sideAddress}<br/>`);
+            } else {
+                $("#bridgeData").html('');
+            }
         }
 
         function deployBridge(nodeUrl) {
@@ -100,7 +103,9 @@
             }
             deployToken(tokenData);
             return false;
-        }); 
+        });
+
+        $.getJSON("/get_bridge", setBridgeData);
     </script>
 </body>
 </html>

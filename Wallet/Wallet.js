@@ -4,16 +4,20 @@ const fs = require("fs");
 const Web3 = require('web3');
 const Tx = require('ethereumjs-tx');
 
-const MY_ADDRESS = '0xC14BbA1b6CC582BBB6B554a5c0821C619CFD42c4';
-const MY_PRIVATE_KEY = Buffer.from('099e8dc1316d838865648e3df3698e7a2037b6c81f270cc075a415b4a8ca6270', 'hex');
-const MAINNET_URL = "ws://localhost:8546";
-const MAIN_TOKEN_SOURCE_FILE = "./bin/BridgedToken.json";
-const SIDE_TOKEN_SOURCE_FILE = "./bin/SideChainToken.json";
+let configFile = fs.readFileSync("./Wallet/Wallet.conf");
+let config = JSON.parse(configFile);
+
+const MY_ADDRESS = config.address;
+const MY_PRIVATE_KEY = Buffer.from(config.key, 'hex');
+const MAINNET_URL = config.mainnet;
+const SIDECHAIN_URL = config.sidechain;
+const MAIN_TOKEN_SOURCE_FILE = config.mainTokenContract;
+const SIDE_TOKEN_SOURCE_FILE = config.sideTokenContract;
+const MAIN_TOKEN_ADDRESS = config.token.main;
+const SIDE_TOKEN_ADDRESS = config.token.side;
 
 var _web3_main = new Web3(new Web3.providers.WebsocketProvider(MAINNET_URL));
-var _web3_side = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8548'));
-var _token_main = '0xe329e3bc2f807ca50ff97aa8f0857750fd7446be';
-var _token_side = '0xd3f12763cb93507e782c94d66648c76292461920';
+var _web3_side = new Web3(new Web3.providers.WebsocketProvider(SIDECHAIN_URL));
 
 let source = fs.readFileSync(MAIN_TOKEN_SOURCE_FILE);
 let main_token_contract = JSON.parse(source);
@@ -61,12 +65,12 @@ function selectNetwork(net, err) {
     switch (net) {
         case "main":
             selectedProvider = _web3_main;
-            selectedToken = _token_main;
+            selectedToken = MAIN_TOKEN_ADDRESS;
             selectedContract = main_token_contract;
             break;
         case "side":
             selectedProvider = _web3_side;
-            selectedToken = _token_side;
+            selectedToken = SIDE_TOKEN_ADDRESS;
             selectedContract = side_token_contract;
             break;
         default:
@@ -154,7 +158,7 @@ function selectAction(req, res) {
     switch (req.pathname) {
         case "":
         case "/":
-            return displayPage("./Wallet.html", res);
+            return displayPage("./Wallet/Wallet.html", res);
         case "/get_account":
             return getAccount(req, res);
         case "/get_balance":
