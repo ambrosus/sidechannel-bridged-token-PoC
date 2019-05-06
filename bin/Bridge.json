@@ -1,0 +1,31 @@
+{
+    "abi": [
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "name": "data",
+                    "type": "bytes"
+                },
+                {
+                    "name": "sender",
+                    "type": "address"
+                },
+                {
+                    "name": "recipient",
+                    "type": "address"
+                }
+            ],
+            "name": "relayMessage",
+            "outputs": [],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        }
+    ],
+    "bytecode": "",
+    "functionHashes": {
+        "relayMessage(bytes,address,address)": "cd3aba7b"
+    },
+    "gasEstimates": null
+}

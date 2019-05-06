@@ -4,14 +4,18 @@
   "description": "",
   "main": "Oracle.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "network": "cd multi-node && docker-compose up -d",
+    "oracle": "node ./Oracle/Oracle.js",
+    "wallet": "node ./Wallet/Wallet.js",
+    "dashboard": "node ./Dashboard/Dashboard.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ethereumjs-tx": "^1.3.7",
-    "openzeppelin-solidity": "^2.1.2",
-    "solc": "^0.5.3",
-    "web3": "^1.0.0-beta.43"
+    "ethereumjs-tx": "1.3.7",
+    "openzeppelin-solidity": "2.1.2",
+    "solc": "0.5.3",
+    "web3": "1.0.0-beta.43",
+    "truffle": "4.1.13"
   }
 }

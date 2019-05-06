@@ -1,0 +1,72 @@
+{
+    "abi": [
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "name": "value",
+                    "type": "uint256"
+                }
+            ],
+            "name": "Foo",
+            "outputs": [],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "name": "chain",
+                    "type": "uint256"
+                },
+                {
+                    "name": "_bridge",
+                    "type": "address"
+                },
+                {
+                    "name": "other",
+                    "type": "address"
+                }
+            ],
+            "name": "callFoo",
+            "outputs": [],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "myValue",
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ],
+    "bytecode": "608060405234801561001057600080fd5b50610281806100206000396000f3fe608060405234801561001057600080fd5b506004361061005d577c010000000000000000000000000000000000000000000000000000000060003504631176bd968114610062578063439a17a81461008157806347f1aae7146100c2575b600080fd5b61007f6004803603602081101561007857600080fd5b50356100dc565b005b61007f6004803603606081101561009757600080fd5b5080359073ffffffffffffffffffffffffffffffffffffffff602082013581169160400135166100e1565b6100ca61024f565b60408051918252519081900360200190f35b600055565b60408051602a602480830191909152825180830382018152604492830184526020810180517bffffffffffffffffffffffffffffffffffffffffffffffffffffffff167f1176bd960000000000000000000000000000000000000000000000000000000017815293517f50a80651000000000000000000000000000000000000000000000000000000008152600481018881523394820185905273ffffffffffffffffffffffffffffffffffffffff878116606484015260809483019485528351608484015283518997918816966350a80651968c969591948b949093919260a4019180838360005b838110156101e25781810151838201526020016101ca565b50505050905090810190601f16801561020f5780820380516001836020036101000a031916815260200191505b5095505050505050600060405180830381600087803b15801561023157600080fd5b505af1158015610245573d6000803e3d6000fd5b5050505050505050565b6000548156fea165627a7a7230582047dc87338a4f6833ea2c259ec8020e595e8a22516b6b695f384995966fbf4cc10029",
+    "functionHashes": {
+        "Foo(uint256)": "1176bd96",
+        "callFoo(uint256,address,address)": "439a17a8",
+        "myValue()": "47f1aae7"
+    },
+    "gasEstimates": {
+        "creation": {
+            "codeDepositCost": "128200",
+            "executionCost": "177",
+            "totalCost": "128377"
+        },
+        "external": {
+            "Foo(uint256)": "20169",
+            "callFoo(uint256,address,address)": "infinite",
+            "myValue()": "422"
+        }
+    }
+}
