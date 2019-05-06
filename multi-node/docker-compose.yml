@@ -3,9 +3,8 @@ version: '2.4'
 networks:
   test_default:
 services:
-  parity1:
-    image: parity/parity:v2.0.8
-    entrypoint: /home/parity/bin/parity
+  main-network:
+    image: parity/parity:v2.3.3
     command: --config /app/parity_config.toml --unsafe-expose --tx-queue-per-sender=500
     working_dir: /app
     user: root
@@ -18,9 +17,8 @@ services:
       - ./1/:/app/
     networks:
       - "test_default"
-  parity2:
-    image: parity/parity:v2.0.8
-    entrypoint: /home/parity/bin/parity
+  side-network:
+    image: parity/parity:v2.3.3
     command: --config /app/parity_config.toml --unsafe-expose --tx-queue-per-sender=500
     working_dir: /app
     user: root
@@ -29,21 +27,6 @@ services:
       - '8547:8547'
       - '8548:8548'
       - '30304:30304'
-    volumes:
-      - ./2/:/app/
-    networks:
-      - "test_default"
-  parity3:
-    image: parity/parity:v2.0.8
-    entrypoint: /home/parity/bin/parity
-    command: --config /app/parity_config.toml --unsafe-expose --tx-queue-per-sender=500
-    working_dir: /app
-    user: root
-    restart: unless-stopped
-    ports:
-      - '8549:8549'
-      - '8550:8550'
-      - '30305:30305'
     volumes:
       - ./2/:/app/
     networks:

@@ -4,10 +4,9 @@ chain = "/app/chain.json"
 auto_update = "none"
 
 [network]
-discovery = true
+discovery = false
 min_peers = 0
 port = 30304
-reserved_peers = "./peers.txt"
 
 [rpc]
 cors = ["all"]
@@ -26,12 +25,6 @@ disable = true
 unlock = [ '0xcd2e67289f9fadbc2917547b51cbc7a9a792c5d0',
            '0xde396059f282f58d67c850c0c65da85ea6ad90af' ]
 password = ["/app/password.pwds"]
-
-[mining]
-engine_signer = "0xcd2e67289f9fadbc2917547b51cbc7a9a792c5d0"
-author = "0xcd2e67289f9fadbc2917547b51cbc7a9a792c5d0"
-reseal_on_txs = "none"
-force_sealing = true
 
 [misc]
 logging = "own_tx=trace"
