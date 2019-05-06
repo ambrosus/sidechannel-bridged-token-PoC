@@ -1,3 +1,7 @@
+/*
+ * Copyright 2019 Ambrosus Inc.
+ * Email: tech@ambrosus.com
+*/
 #sidenav a {font-family:"Segoe UI",Arial,sans-serif;text-decoration:none;display:block;padding:2px 1px 1px 16px}
 #sidenav a:hover,#sidenav a:focus {color:#000000;background-color:#cccccc;}
 #sidenav a.active {background-color:#4CAF50;color:#ffffff}

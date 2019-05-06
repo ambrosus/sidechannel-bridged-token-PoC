@@ -1,3 +1,8 @@
+/**
+ * Copyright 2019 Ambrosus Inc.
+ * Email: tech@ambrosus.com
+ */
+
 var http = require('http');
 var url = require('url');
 const fs = require("fs");

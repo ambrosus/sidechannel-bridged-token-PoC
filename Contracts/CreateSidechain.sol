@@ -1,3 +1,8 @@
+/**
+ * Copyright 2019 Ambrosus Inc.
+ * Email: tech@ambrosus.com
+ */
+
 pragma solidity 0.5.3;
 
 contract SidechannelStore {

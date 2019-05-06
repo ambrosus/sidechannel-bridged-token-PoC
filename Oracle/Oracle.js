@@ -1,3 +1,8 @@
+/**
+ * Copyright 2019 Ambrosus Inc.
+ * Email: tech@ambrosus.com
+ */
+
 const Web3 = require('web3');
 const fs = require("fs");
 const Tx = require('ethereumjs-tx');
